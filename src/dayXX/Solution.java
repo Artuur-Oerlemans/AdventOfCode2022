@@ -5,6 +5,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Stream;
 
 public class Solution {
@@ -56,5 +60,15 @@ class Solver {
 
     Object part2(String stringData) {
         return "Hello";
+    }
+}
+
+class Helper {
+    public static Set<Character> stringToCharSet(String s) {
+        return new HashSet<>(s.chars().mapToObj(e->(char)e).toList());
+    }
+
+    public static List<Character> stringToList(String s) {
+        return new ArrayList<>(s.chars().mapToObj(e->(char)e).toList());
     }
 }
