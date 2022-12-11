@@ -111,7 +111,7 @@ class Solver {
         if(x -1 <= k && k < x + 2){
             screenLine.add("#");
         } else {
-            screenLine.add(".");
+            screenLine.add(" ");
         }
     }
 }
