@@ -58,11 +58,6 @@ class Solver {
                 .mapToInt(Integer::valueOf)
                 .sum();
 
-        Pattern p = Pattern.compile("([\\d]+)");
-        var extractedInts = p.matcher(stringData).results().map(MatchResult::group)
-                .map(Integer::valueOf)
-                .collect(Collectors.toList());
-
         return sum;
     }
 
@@ -72,6 +67,14 @@ class Solver {
 }
 
 class Helper {
+
+    public static List<Integer> extractInts(String stringData) {
+        Pattern p = Pattern.compile("([\\d]+)");
+        return p.matcher(stringData).results().map(MatchResult::group)
+                .map(Integer::valueOf)
+                .collect(Collectors.toList());
+    }
+
     public static Set<Character> stringToCharSet(String s) {
         return new HashSet<>(s.chars().mapToObj(e->(char)e).toList());
     }
