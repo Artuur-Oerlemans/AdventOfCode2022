@@ -6,8 +6,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -96,17 +96,13 @@ class Solver {
             }
         }
 
-        for (var point : borderIntersections) {
-            if (0 > point.x || point.x > maxCoor || 0 > point.y || point.y > maxCoor) {
-                continue;
-            }
-            if(notSeen(point, sensors)) {
-                System.out.println(point);
-                return 4000000L * point.x + (long)point.y;
-            }
-        }
+        Optional<Long> result = borderIntersections.parallelStream()
+                .filter(p -> 0 <= p.x && p.x <= maxCoor && 0 <= p.y && p.y <= maxCoor)
+                .filter(p -> notSeen(p, sensors))
+                .map(p -> 4000000L * p.x + p.y)
+                .findFirst();
 
-        return -1;
+        return result.orElse(-1L);
     }
 
     void calcBorderIntersections(Sensor sensor1, Sensor sensor2, HashSet<Point> borderIntersections) {
