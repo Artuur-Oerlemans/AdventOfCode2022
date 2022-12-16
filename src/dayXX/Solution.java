@@ -69,7 +69,7 @@ class Solver {
 class Helper {
 
     public static List<Integer> extractInts(String stringData) {
-        Pattern p = Pattern.compile("([\\d]+)");
+        Pattern p = Pattern.compile("(-?[\\d]+)");
         return p.matcher(stringData).results().map(MatchResult::group)
                 .map(Integer::valueOf)
                 .collect(Collectors.toList());
