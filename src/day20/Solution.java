@@ -51,82 +51,62 @@ public class Solution {
 
 class Solver {
     Object part1(String stringData) {
-        var lines = stringData.split(System.lineSeparator());
-        var originalNumbers = new ArrayList<>(Stream.of(lines).toList());
-        for(int i = 0; i < originalNumbers.size(); i++) {
-            originalNumbers.set(i, originalNumbers.get(i) + "," + i);
-        }
-//        originalNumbers = List.of("0", "0", "0", "-6");
-        var mixed = new ArrayList<>(originalNumbers);
-        System.out.println(" , " + mixed);
+        var rawNumbers = stringData.split(System.lineSeparator());
+        var numberOrder = Stream.of(rawNumbers)
+                .map(Long::parseLong)
+                .map(NumberPojo::new)
+                .toList();
+        var mixed = new ArrayList<>(numberOrder);
 
+        decrypt(numberOrder, mixed);
 
-        for(var numberStr : originalNumbers) {
-            var index = mixed.indexOf(numberStr);
-            mixed.remove(numberStr);
-            int number = Integer.parseInt(numberStr.split(",")[0]);
-
-            int mod = mixed.size();
-            int newIndex = (index + number + mod + mod) % mod;
-            if(newIndex == 0 && number < 0) {
-                mixed.add(mixed.size(), number + "");
-            } else if(newIndex == 0 && number > 0) {
-                mixed.add(mixed.size(), number + "");
-            }else {
-                mixed.add(newIndex, number + "");
-            }
-            if(mixed.size() < 10) {
-                System.out.println(numberStr + ", " + mixed);
-            }
-        }
-        var ints = mixed.stream().map(Integer::valueOf).toList();
-
-        var start = mixed.indexOf("0");
-        System.out.println(ints.get((start + 1000) % mixed.size()) + " " + ints.get((start + 2000) % mixed.size()) + " " + ints.get((start + 3000) % mixed.size()));
-        return ints.get((start + 1000) % mixed.size()) + ints.get((start + 2000) % mixed.size()) + ints.get((start + 3000) % mixed.size());
+        // 4914
+        return getResult(mixed);
     }
 
     Object part2(String stringData) {
-        var lines = stringData.split(System.lineSeparator());
-        var originalNumbers = new ArrayList<>(Stream.of(lines).toList());
-        for(int i = 0; i < originalNumbers.size(); i++) {
-            long keyUsed = Long.parseLong(originalNumbers.get(i)) * 811589153L;
-            originalNumbers.set(i, keyUsed + " " + i);
-        }
-//        originalNumbers = List.of("0", "0", "0", "-6");
-        var mixed = new ArrayList<>(originalNumbers);
-        System.out.println(" , " + mixed);
+        var rawNumbers = stringData.split(System.lineSeparator());
+        var numberOrder = Stream.of(rawNumbers)
+                .map(Long::parseLong)
+                .map(l -> l * 811589153L)
+                .map(NumberPojo::new)
+                .toList();
+        var mixed = new ArrayList<>(numberOrder);
 
         for(int i = 0; i < 10; i++) {
-            for(var numberStr : originalNumbers) {
-                var index = mixed.indexOf(numberStr);
-                mixed.remove(numberStr);
-                long number = Long.parseLong(numberStr.split(" ")[0]);
-
-                long mod = mixed.size();
-                int newIndex = (int) ((index + number) % mod);
-                if(newIndex < 0) {
-                    newIndex += mod;
-                }
-                if(newIndex == 0 && number < 0) {
-                    mixed.add(mixed.size(), numberStr);
-                }
-                else if(newIndex == 0 && number > 0) {
-                    mixed.add(mixed.size(), numberStr);
-                }
-                else {
-                    mixed.add(newIndex, numberStr);
-                }
-            }
-            if(mixed.size() < 10) {
-                System.out.println( mixed.stream().map(s-> s.split(" ")[0]).map(Long::valueOf).toList());
-            }
+            decrypt(numberOrder, mixed);
         }
-        var longs = mixed.stream().map(s-> s.split(" ")[0]).map(Long::valueOf).toList();
 
-        var start = longs.indexOf(0L);
-        System.out.println(longs.get((start + 1000) % mixed.size()) + " " + longs.get((start + 2000) % mixed.size()) + " " + longs.get((start + 3000) % mixed.size()));
-        return longs.get((start + 1000) % mixed.size()) + longs.get((start + 2000) % mixed.size()) + longs.get((start + 3000) % mixed.size());
+        // 7973051839072
+        return getResult(mixed);
+    }
+
+    private void decrypt(List<NumberPojo> numberOrder, ArrayList<NumberPojo> mixed) {
+        for(var numberPojo : numberOrder) {
+            var index = mixed.indexOf(numberPojo);
+            mixed.remove(numberPojo);
+            long number =  numberPojo.number();
+
+            int newIndex = Math.floorMod(index + number, mixed.size());
+            mixed.add(newIndex, numberPojo);
+        }
+    }
+
+    private long getResult(ArrayList<NumberPojo> mixed) {
+        var zeroObject = mixed.parallelStream().filter(np -> np.number() == 0L).findFirst().get();
+        var start = mixed.indexOf(zeroObject);
+        return mixed.get((start + 1000) % mixed.size()).number() + mixed.get((start + 2000) % mixed.size()).number() + mixed.get((start + 3000) % mixed.size()).number();
+    }
+}
+
+// use a class, not a record to guarantee the hash doesn't make objects with equal value equal.
+class NumberPojo {
+    private final long number;
+    NumberPojo(long number) {
+        this.number = number;
+    }
+    long number() {
+        return number;
     }
 }
 
