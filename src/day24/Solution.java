@@ -68,21 +68,20 @@ class Solver {
         }
         var states = new ArrayList<>(List.of(initialState));
 
-        var pq = new PriorityQueue<TravelPoint>(1000, Comparator.comparingInt(TravelPoint::time));
+        var pq = new PriorityQueue<>(1000, Comparator.comparingInt(TravelPoint::time));
         var alreadyBeen = new HashSet<TravelPoint>();
-        var startPoint = new TravelPoint(new Point(1, 0), 0);
+        var startPoint = new TravelPoint(new Point(1, 0), 0, false, false);
         pq.add(startPoint);
         while( !goalPoint.equals(pq.peek().loc())) {
             var tp = pq.remove();
-            alreadyBeen.add(tp);
             while(states.size() <= tp.time() +1) {
-                System.out.println(alreadyBeen.size());
                 addState(states, maxx, maxy);
             }
 
             for(var neighbour: getNeighbours(tp)) {
                 if(!alreadyBeen.contains(neighbour) && !states.get(neighbour.time()).containsKey(neighbour.loc()) && neighbour.loc().y >=0) {
                     pq.add(neighbour);
+                    alreadyBeen.add(neighbour);
                 }
             }
         }
@@ -90,7 +89,6 @@ class Solver {
     }
 
     void addState(List<HashMap<Point, ArrayList<Character>>> states, int maxx, int maxy) {
-        System.out.println("states size " + states.size());
         var last = states.get(states.size() -1);
         var newState = new HashMap<Point, ArrayList<Character>>();
         BiFunction<ArrayList<Character>, ArrayList<Character>, ArrayList<Character>> combineList = (a, b) -> {
@@ -138,37 +136,29 @@ class Solver {
     Point moveBliz(Point p, Point dir, int maxx, int maxy) {
         var imagine = add(p, dir);
 
-//        if(dir.equals(new Point(0, -1))) {
-//            System.out.println(p + " " + dir + " " + imagine + maxy);
-//        }
         if(imagine.x == 0) {
-            imagine = new Point(maxx -2, p.y);
+            return new Point(maxx -2, p.y);
         }
         if(imagine.x == maxx -1) {
-            imagine = new Point(1, p.y);
+            return new Point(1, p.y);
         }
         if(imagine.y == 0) {
-            imagine = new Point(p.x, maxy -2);
+            return new Point(p.x, maxy -2);
         }
         if(imagine.y == maxy -1) {
-            imagine = new Point(p.x, 1);
+            return new Point(p.x, 1);
         }
-//        if(dir.equals(new Point(0, -1))) {
-//            System.out.println(p + " " + dir + " " + imagine);
-//            Console cnsl = System.console();
-//            cnsl.readLine("waiting for you : ");
-//        }
         return imagine;
     }
 
     List<TravelPoint> getNeighbours(TravelPoint tp) {
         var time = tp.time() +1;
         var neighbours = new ArrayList<TravelPoint>();
-        neighbours.add(new TravelPoint(tp.loc(), time));
-        neighbours.add(new TravelPoint(add(tp.loc(),new Point(1, 0)), time));
-        neighbours.add(new TravelPoint(add(tp.loc(),new Point(-1, 0)), time));
-        neighbours.add(new TravelPoint(add(tp.loc(),new Point(0, 1)), time));
-        neighbours.add(new TravelPoint(add(tp.loc(),new Point(0, -1)), time));
+        neighbours.add(new TravelPoint(tp.loc(), time, tp.reachedDest(), tp.returned()));
+        neighbours.add(new TravelPoint(add(tp.loc(),new Point(1, 0)), time, tp.reachedDest(), tp.returned()));
+        neighbours.add(new TravelPoint(add(tp.loc(),new Point(-1, 0)), time, tp.reachedDest(), tp.returned()));
+        neighbours.add(new TravelPoint(add(tp.loc(),new Point(0, 1)), time, tp.reachedDest(), tp.returned()));
+        neighbours.add(new TravelPoint(add(tp.loc(),new Point(0, -1)), time, tp.reachedDest(), tp.returned()));
         return neighbours;
     }
 
@@ -177,11 +167,51 @@ class Solver {
     }
 
     Object part2(String stringData) {
-        return -1;
+        var lines = stringData.split(System.lineSeparator());
+
+        var initialState = new HashMap<Point, ArrayList<Character>>();
+        int maxx = lines[0].length();
+        int maxy = lines.length;
+        var goalPoint = new Point(maxx -2, maxy -1);
+        var startPoint = new Point(1, 0);
+        for(int j = 0; j < lines.length; j++) {
+            for(int i = 0; i < lines[j].length(); i++) {
+                if(lines[j].charAt(i) != '.') {
+                    var l = new ArrayList<Character>();
+                    l.add(lines[j].charAt(i));
+                    initialState.merge(new Point(i, j), l, (a,b) -> {a.addAll(b); return a;});
+                }
+            }
+        }
+        var states = new ArrayList<>(List.of(initialState));
+
+        var pq = new PriorityQueue<>(1000, Comparator.comparingInt(TravelPoint::time));
+        var alreadyBeen = new HashSet<TravelPoint>();
+        var startTP = new TravelPoint(startPoint, 0, false, false);
+        pq.add(startTP);
+        while( !goalPoint.equals(pq.peek().loc()) || !pq.peek().returned()) {
+            var tp = pq.remove();
+            while(states.size() <= tp.time() +1) {
+                addState(states, maxx, maxy);
+            }
+
+            for(var neighbour: getNeighbours(tp)) {
+                if(!alreadyBeen.contains(neighbour) && !states.get(neighbour.time()).containsKey(neighbour.loc()) && neighbour.loc().y >=0 && neighbour.loc().y < maxy) {
+                    if(goalPoint.equals(neighbour.loc())) {
+                        neighbour = new TravelPoint(neighbour.loc(), neighbour.time(), true, neighbour.returned());
+                    } else if(startPoint.equals(neighbour.loc()) && neighbour.reachedDest()) {
+                        neighbour = new TravelPoint(neighbour.loc(), neighbour.time(), true, true);
+                    }
+                    pq.add(neighbour);
+                    alreadyBeen.add(neighbour);
+                }
+            }
+        }
+        return pq.remove().time();
     }
 }
 
-record TravelPoint(Point loc, int time) {}
+record TravelPoint(Point loc, int time, boolean reachedDest, boolean returned) {}
 
 class Helper {
 
